@@ -4,12 +4,13 @@
     "description": "BlueBubbles Server is the app that powers the BlueBubbles app ecosystem",
     "main": "./dist/main.js",
     "scripts": {
+        "build-swift-helper": "cd swiftHelper; swift build -c release; cd ..",
         "build-main": "cross-env NODE_ENV=production webpack --config webpack.main.prod.config.js",
         "build-renderer": "cross-env NODE_ENV=production webpack --config webpack.renderer.prod.config.js",
-        "build": "npm run build-main && npm run build-renderer",
+        "build": "npm run build-swift-helper && npm run build-main && npm run build-renderer",
         "start-renderer-dev": "webpack-dev-server --config webpack.renderer.dev.config.js",
         "start-main-dev": "webpack --config webpack.main.config.js && electron ./dist/main.js",
-        "start-dev": "cross-env START_HOT=1 NODE_ENV=development npm run start-renderer-dev",
+        "start-dev": "npm run build-swift-helper && cross-env START_HOT=1 NODE_ENV=development npm run start-renderer-dev",
         "lint": "eslint --ext=jsx,js,tsx,ts src",
         "dist": "yarn build && electron-builder build --mac --publish never",
         "postinstall": "electron-builder install-app-deps"

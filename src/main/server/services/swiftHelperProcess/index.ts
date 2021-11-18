@@ -3,11 +3,14 @@ import * as net from "net";
 import * as fs from "fs-extra";
 import { ChildProcess, spawn } from "child_process";
 import { app } from "electron";
+import { FileSystem } from "@server/fileSystem";
 import SocketMessage from "./socketMessage";
 import SocketQueue from "./socketQueue";
 
 export default class SwiftHelperService {
     sockPath: string;
+
+    helperPath: string;
 
     server: net.Server;
 
@@ -36,7 +39,7 @@ export default class SwiftHelperService {
 
     private runSwiftHelper() {
         Server().log("Starting Swift Helper");
-        this.child = spawn("swiftHelper/.build/release/swiftHelper", [this.sockPath]);
+        this.child = spawn(this.helperPath, [this.sockPath]);
         this.child.stdout.setEncoding("utf8");
         this.child.stdout.on("data", data => {
             Server().log(`Swift Helper: ${data.toString().trim()}`);
@@ -52,6 +55,7 @@ export default class SwiftHelperService {
     }
 
     start() {
+        this.helperPath = `${FileSystem.resources}/swiftHelper`;
         this.sockPath = `${app.getPath("userData")}/swift-helper.sock`;
         // Configure & start the socket server
         Server().log("Starting Private API Helper...", "debug");

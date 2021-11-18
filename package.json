@@ -4,7 +4,7 @@
     "description": "BlueBubbles Server is the app that powers the BlueBubbles app ecosystem",
     "main": "./dist/main.js",
     "scripts": {
-        "build-swift-helper": "cd swiftHelper; swift build -c release; cd ..",
+        "build-swift-helper": "cd swiftHelper; swift build -c release; cp .build/release/swiftHelper ../appResources/swiftHelper; cd ..",
         "build-main": "cross-env NODE_ENV=production webpack --config webpack.main.prod.config.js",
         "build-renderer": "cross-env NODE_ENV=production webpack --config webpack.renderer.prod.config.js",
         "build": "npm run build-swift-helper && npm run build-main && npm run build-renderer",

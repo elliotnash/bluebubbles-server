@@ -10,6 +10,7 @@ import { Chat, getChatResponse } from "@server/databases/imessage/entity/Chat";
 import { Attachment, getAttachmentResponse } from "@server/databases/imessage/entity/Attachment";
 import { isMinBigSur, isMinCatalina, isMinSierra, sanitizeStr } from "@server/helpers/utils";
 import { invisibleMediaChar } from "@server/services/http/constants";
+import { AttributedBodyTransformer } from "@server/databases/transformers/AttributedBodyTransformer";
 
 @Entity("message")
 export class Message {
@@ -98,8 +99,12 @@ export class Message {
     @Column({ type: "text", nullable: true })
     country: string;
 
-    @Column({ type: "blob", nullable: true })
-    attributedBody: Blob;
+    @Column({
+        type: "blob",
+        nullable: true,
+        transformer: AttributedBodyTransformer
+    })
+    attributedBody: Promise<Record<string, any>>;
 
     @Column({ type: "integer", nullable: true, default: 0 })
     version: number;
@@ -510,6 +515,7 @@ export const getMessageResponse = async (tableData: Message): Promise<MessageRes
         originalROWID: tableData.ROWID,
         guid: tableData.guid,
         text: tableData.text,
+        attributedBody: await tableData.attributedBody,
         handle: tableData.handle ? await getHandleResponse(tableData.handle) : null,
         handleId: tableData.handleId,
         otherHandle: tableData.otherHandle,

@@ -34,6 +34,7 @@ class SocketManager {
         var readData = Data(capacity: 12288)
         while true {
             do {
+                readData.removeAll()
                 let bytesRead = try sock?.read(into: &readData)
                 guard let msg = SocketMessage.fromBytes(bytes: readData, bytesRead: bytesRead!) else {break}
                 try sock?.write(from: msg.handleMessage()!.toBytes())

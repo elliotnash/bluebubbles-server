@@ -42,7 +42,7 @@ import { runTerminalScript, openSystemPreferences } from "@server/api/v1/apple/s
 import { ActionHandler } from "./api/v1/apple/actions";
 import { insertChatParticipants, isEmpty, isMinBigSur, isNotEmpty } from "./helpers/utils";
 import { Proxy } from "./services/proxy";
-import { SwiftHelperService } from "./services/swiftHelperProcess";
+import SwiftHelperService from "./services/swiftHelperProcess";
 import { BlueBubblesHelperService } from "./services/helperProcess";
 
 const findProcess = require("find-process");
@@ -676,6 +676,8 @@ class BlueBubblesServer extends EventEmitter {
             this.log(`Failed to setup socket service! ${ex.message}`, "error");
         }
 
+        this.swiftHelper = new SwiftHelperService();
+
         const privateApiEnabled = this.repo.getConfig("enable_private_api") as boolean;
         if (privateApiEnabled) {
             try {
@@ -744,10 +746,12 @@ class BlueBubblesServer extends EventEmitter {
             this.log(`Failed to start Message Manager service! ${ex.message}`, "error");
         }
 
-        // start swift message helper for deserializing attributedBody
-        this.swiftHelper = new SwiftHelperService();
-        this.log("Starting Swift Helper listener...")
-        this.swiftHelper.start();
+        try {
+            this.log("Starting Swift Helper listener...")
+            this.swiftHelper.start();
+        } catch (ex: any) {
+            this.log(`Failed to start Swift Helper listener! ${ex.message}`, "error");
+        }
 
         const privateApiEnabled = this.repo.getConfig("enable_private_api") as boolean;
         if (privateApiEnabled) {

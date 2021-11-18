@@ -5,7 +5,7 @@ import { ChildProcess, spawn } from "child_process";
 import { app } from "electron";
 import SocketMessage from "./socketMessage";
 
-export class SwiftHelperService {
+export default class SwiftHelperService {
     sockPath: string;
 
     server: net.Server;
@@ -14,7 +14,9 @@ export class SwiftHelperService {
 
     child: ChildProcess;
 
-    startServer() {
+    responseQueue: Array<(buf: Buffer) => void> = [];
+
+    private startServer() {
         fs.removeSync(this.sockPath);
         this.server = net.createServer(client => {
             Server().log("Swift Helper connected");
@@ -23,13 +25,14 @@ export class SwiftHelperService {
             });
             client.on("data", data => {
                 const msg = SocketMessage.fromBytes(data);
+                this.responseQueue.shift()(msg.data);
             });
             this.helper = client;
         });
         this.server.listen(this.sockPath);
     }
 
-    runSwiftHelper() {
+    private runSwiftHelper() {
         Server().log("Starting Swift Helper");
         this.child = spawn("swiftHelper/.build/release/swiftHelper", [this.sockPath]);
         this.child.stdout.setEncoding("utf8");
@@ -53,4 +56,15 @@ export class SwiftHelperService {
         this.startServer();
         setTimeout(this.runSwiftHelper.bind(this), 100);
     }
+
+    async deserializeAttributedBody(blob: Blob): Promise<Record<string, any>> {
+        const msg = new SocketMessage("deserializeAttributedBody", Buffer.from(blob));
+        this.helper.write(msg.toBytes());
+        return new Promise((resolve) => {
+            this.responseQueue.push((buf) => {
+                resolve(buf == null ? JSON.parse(buf.toString()) : null);
+            });
+        });
+    }
+
 }

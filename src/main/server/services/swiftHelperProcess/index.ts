@@ -4,28 +4,30 @@ import * as fs from "fs-extra";
 import { ChildProcess, spawn } from "child_process";
 import { app } from "electron";
 import SocketMessage from "./socketMessage";
+import SocketQueue from "./socketQueue";
 
 export default class SwiftHelperService {
     sockPath: string;
 
     server: net.Server;
 
-    helper: net.Socket;
+    helper: net.Socket = null;
 
     child: ChildProcess;
 
-    responseQueue: Array<(buf: Buffer) => void> = [];
+    queue: SocketQueue = new SocketQueue();
 
     private startServer() {
         fs.removeSync(this.sockPath);
         this.server = net.createServer(client => {
             Server().log("Swift Helper connected");
             client.on("end", () => {
+                this.helper = null;
                 Server().log("Swift Helper disconnected");
             });
             client.on("data", data => {
                 const msg = SocketMessage.fromBytes(data);
-                this.responseQueue.shift()(msg.data);
+                this.queue.callNext(msg.data);
             });
             this.helper = client;
         });
@@ -58,13 +60,15 @@ export default class SwiftHelperService {
     }
 
     async deserializeAttributedBody(blob: Blob): Promise<Record<string, any>> {
-        const msg = new SocketMessage("deserializeAttributedBody", Buffer.from(blob));
-        this.helper.write(msg.toBytes());
-        return new Promise((resolve) => {
-            this.responseQueue.push((buf) => {
-                resolve(buf == null ? JSON.parse(buf.toString()) : null);
+        if (this.helper != null) {
+            const msg = new SocketMessage("deserializeAttributedBody", Buffer.from(blob));
+            this.helper.write(msg.toBytes());
+            return new Promise(resolve => {
+                this.queue.enqueue(buf => {
+                    resolve(buf != null ? JSON.parse(buf.toString()) : null);
+                });
             });
-        });
+        }
+        return null;
     }
-
 }

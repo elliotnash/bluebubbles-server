@@ -11,22 +11,22 @@ import Socket
 class SocketManager {
     static let shared = SocketManager()
     var sock: Socket? = nil
-    func connect() {
+    func connect(sock: String) {
         while true {
             do {
-                try sock = Socket.create(family: Socket.ProtocolFamily.unix, proto: Socket.SocketProtocol.unix)
-                try sock?.connect(to: "/Users/elliot/Code/Node/nodetest/testsock.sock")
-                print("Connected to socket")
+                try self.sock = Socket.create(family: Socket.ProtocolFamily.unix, proto: Socket.SocketProtocol.unix)
+                try self.sock?.connect(to: sock)
+                print("connected to socket")
                 event()
-                print("Socket disconnected")
+                print("socket disconnected")
             } catch let error {
                 guard let socketError = error as? Socket.Error else {
-                    print("Unexpected error...\n \(error)")
+                    print("unexpected error...\n \(error)")
                     return
                 }
-                print("Error reported:\n \(socketError.description)")
+                print("error reported:\n \(socketError.description)")
             }
-            print("Attempting reconnect in 5 seconds")
+            print("attempting reconnect in 5 seconds")
             sleep(5)
         }
     }

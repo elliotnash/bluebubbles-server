@@ -51,6 +51,6 @@ export class SwiftHelperService {
         // Configure & start the socket server
         Server().log("Starting Private API Helper...", "debug");
         this.startServer();
-        setTimeout(this.runSwiftHelper, 100);
+        setTimeout(this.runSwiftHelper.bind(this), 100);
     }
 }

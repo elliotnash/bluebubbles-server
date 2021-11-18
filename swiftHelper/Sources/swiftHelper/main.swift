@@ -7,6 +7,10 @@
 import Foundation
 
 setbuf(__stdoutp, nil)
-print("starting socket")
-SocketManager.shared.connect()
-print("socket closed")
+if CommandLine.arguments.count > 1 {
+    print("starting socket")
+    SocketManager.shared.connect(sock: CommandLine.arguments[1])
+    print("socket closed")
+} else {
+    print("no sock file provided")
+}

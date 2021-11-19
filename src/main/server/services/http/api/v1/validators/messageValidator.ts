@@ -48,20 +48,22 @@ export class MessageValidator {
 
     static async validateText(ctx: RouterContext, next: Next) {
         const { tempGuid, method, effectId, subject, selectedMessageGuid } = ValidateInput(
-            ctx.request.body, MessageValidator.sendTextRules);
+            ctx.request.body,
+            MessageValidator.sendTextRules
+        );
         let saniMethod = method;
 
         // Default the method to AppleScript
         saniMethod = saniMethod ?? "apple-script";
 
-        // If we have an effectId or subject, let's imply we want to use
-        // the Private API
-        if (effectId || subject || selectedMessageGuid) {
+        // If we have an effectId, subject, reply, or attributedBody
+        // let's imply we want to use the Private API
+        if (effectId || subject || selectedMessageGuid || ctx.request.body.attributedBody) {
             saniMethod = "private-api";
         }
 
         // If we are sending via apple-script, we require a tempGuid
-        if (saniMethod === 'apple-script' && (isEmpty(tempGuid))) {
+        if (saniMethod === "apple-script" && isEmpty(tempGuid)) {
             throw new BadRequest({ error: `A 'tempGuid' is required when sending via AppleScript` });
         }
 

@@ -37,6 +37,7 @@ export class MessageInterface {
     static async sendMessageSync(
         chatGuid: string,
         message: string,
+        attributedBody: Record<string, any>,
         method: "apple-script" | "private-api",
         subject?: string,
         effectId?: string,
@@ -66,7 +67,13 @@ export class MessageInterface {
             sentMessage = await awaiter.promise;
         } else if (method === "private-api") {
             sentMessage = await MessageInterface.sendMessagePrivateApi(
-                chatGuid, message, subject, effectId, selectedMessageGuid);
+                chatGuid,
+                message,
+                attributedBody,
+                subject,
+                effectId,
+                selectedMessageGuid
+            );
         } else {
             throw new Error(`Invalid send method: ${method}`);
         }
@@ -127,6 +134,7 @@ export class MessageInterface {
     static async sendMessagePrivateApi(
         chatGuid: string,
         message: string,
+        attributedBody?: Record<string, any> | null,
         subject?: string | null,
         effectId?: string | null,
         selectedMessageGuid?: string | null
@@ -135,6 +143,7 @@ export class MessageInterface {
         const result = await Server().privateApiHelper.sendMessage(
             chatGuid,
             message,
+            attributedBody ?? null,
             subject ?? null,
             effectId ?? null,
             selectedMessageGuid ?? null

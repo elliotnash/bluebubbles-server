@@ -37,8 +37,8 @@ export class MessageInterface {
     static async sendMessageSync(
         chatGuid: string,
         message: string,
-        attributedBody: Record<string, any>,
         method: "apple-script" | "private-api",
+        attributedBody?: Record<string, any> | null,
         subject?: string,
         effectId?: string,
         selectedMessageGuid?: string,

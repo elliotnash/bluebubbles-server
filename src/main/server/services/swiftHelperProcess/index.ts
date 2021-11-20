@@ -63,8 +63,8 @@ export default class SwiftHelperService {
         setTimeout(this.runSwiftHelper.bind(this), 100);
     }
 
-    async deserializeAttributedBody(blob: Blob): Promise<Record<string, any>> {
-        if (this.helper != null) {
+    async deserializeAttributedBody(blob: Blob | null): Promise<Record<string, any>> {
+        if (blob != null && this.helper != null) {
             const msg = new SocketMessage("deserializeAttributedBody", Buffer.from(blob));
             this.helper.write(msg.toBytes());
             return new Promise(resolve => {

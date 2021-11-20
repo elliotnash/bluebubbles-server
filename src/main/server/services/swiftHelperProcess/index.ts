@@ -30,7 +30,7 @@ export default class SwiftHelperService {
             });
             client.on("data", data => {
                 const msg = SocketMessage.fromBytes(data);
-                this.queue.callNext(msg.data);
+                this.queue.call(msg.uuid, msg.data);
             });
             this.helper = client;
         });
@@ -42,7 +42,7 @@ export default class SwiftHelperService {
         this.child = spawn(this.helperPath, [this.sockPath]);
         this.child.stdout.setEncoding("utf8");
         this.child.stdout.on("data", data => {
-            Server().log(`Swift Helper: ${data.toString().trim()}`);
+            Server().log(`Swift Helper: ${data.toString().trim()}`, "debug");
         });
         this.child.stderr.setEncoding("utf8");
         this.child.stderr.on("data", data => {
@@ -58,20 +58,29 @@ export default class SwiftHelperService {
         this.helperPath = `${FileSystem.resources}/swiftHelper`;
         this.sockPath = `${app.getPath("userData")}/swift-helper.sock`;
         // Configure & start the socket server
-        Server().log("Starting Private API Helper...", "debug");
+        Server().log("Starting Swift Helper...", "debug");
         this.startServer();
         setTimeout(this.runSwiftHelper.bind(this), 100);
+    }
+
+    private async sendSocketMessage(msg: SocketMessage): Promise<Buffer | null> {
+        return new Promise(resolve => {
+            this.helper.write(msg.toBytes());
+            this.queue.enqueue(msg.uuid, resolve);
+        });
     }
 
     async deserializeAttributedBody(blob: Blob | null): Promise<Record<string, any>> {
         if (blob != null && this.helper != null) {
             const msg = new SocketMessage("deserializeAttributedBody", Buffer.from(blob));
-            this.helper.write(msg.toBytes());
-            return new Promise(resolve => {
-                this.queue.enqueue(buf => {
-                    resolve(buf != null ? JSON.parse(buf.toString()) : null);
-                });
-            });
+            const buf = await this.sendSocketMessage(msg);
+            if (buf != null) {
+                try {
+                    return JSON.parse(buf.toString());
+                } catch (e) {
+                    Server().log(e);
+                }
+            }
         }
         return null;
     }

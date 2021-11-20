@@ -36,7 +36,14 @@ class SocketManager {
             do {
                 readData.removeAll()
                 let bytesRead = try sock?.read(into: &readData)
-                guard let msg = SocketMessage.fromBytes(bytes: readData, bytesRead: bytesRead!) else {break}
+                // if data is empty we should force a reconnnect
+                if (readData.isEmpty) {
+                    break
+                }
+                guard let msg = SocketMessage.fromBytes(bytes: readData, bytesRead: bytesRead!) else {
+                    continue
+                }
+                print("Recieved socket message: "+msg.event)
                 try sock?.write(from: msg.handleMessage()!.toBytes())
             } catch let error {
                 guard let socketError = error as? Socket.Error else {

@@ -10,16 +10,16 @@ import { Chat, getChatResponse } from "@server/databases/imessage/entity/Chat";
 import { Attachment, getAttachmentResponse } from "@server/databases/imessage/entity/Attachment";
 import { isMinBigSur, isMinCatalina, isMinSierra, sanitizeStr } from "@server/helpers/utils";
 import { invisibleMediaChar } from "@server/services/http/constants";
-import { AttributedBodyTransformer } from "@server/databases/transformers/AttributedBodyTransformer";
+import { Server } from "@server/index";
 
 @Entity("message")
 export class Message {
     contentString(maxText = 15): string {
-        let text = sanitizeStr((this.text ?? '').replace(invisibleMediaChar, ''));
+        let text = sanitizeStr((this.text ?? "").replace(invisibleMediaChar, ""));
         const textLen = text.length;
         const attachments = this.attachments ?? [];
         const attachmentsLen = attachments.length;
-        let subject = this.subject ?? '';
+        let subject = this.subject ?? "";
         const subjectLen = subject.length;
 
         // Build the content
@@ -48,7 +48,7 @@ export class Message {
         // If we have attachments, print those out
         if (attachmentsLen > 0) parts.push(`Attachments: ${attachmentsLen}`);
 
-        return parts.join('; ');
+        return parts.join("; ");
     }
 
     @PrimaryGeneratedColumn({ name: "ROWID" })
@@ -99,12 +99,8 @@ export class Message {
     @Column({ type: "text", nullable: true })
     country: string;
 
-    @Column({
-        type: "blob",
-        nullable: true,
-        transformer: AttributedBodyTransformer
-    })
-    attributedBody: Promise<Record<string, any>>;
+    @Column({ type: "blob", nullable: true })
+    attributedBody: Blob;
 
     @Column({ type: "integer", nullable: true, default: 0 })
     version: number;
@@ -515,7 +511,7 @@ export const getMessageResponse = async (tableData: Message): Promise<MessageRes
         originalROWID: tableData.ROWID,
         guid: tableData.guid,
         text: tableData.text,
-        attributedBody: await tableData.attributedBody,
+        attributedBody: await Server().swiftHelper.deserializeAttributedBody(tableData.attributedBody),
         handle: tableData.handle ? await getHandleResponse(tableData.handle) : null,
         handleId: tableData.handleId,
         otherHandle: tableData.otherHandle,

@@ -1,21 +1,50 @@
 import { generateUuid } from "@server/helpers/utils";
 
+/**
+ * Represents the ASCII start of text (STX) character.
+ */
 const START_OF_TEXT = 0x02;
+/**
+ * Represents the ASCII end of text (ETX) character.
+ */
 const END_OF_TEXT = 0x03;
 
+/**
+ * A class that facilitates sending events over the swift helper socket.
+ */
 export default class SocketMessage {
+    /**
+     * The name of the socket event
+     */
     event: string;
 
-    data: Buffer;
-
+    /**
+     * A unique identifier for this message, used to resolve the response promise.
+     */
     uuid: string;
 
+    /**
+     * The message payload
+     */
+    data: Buffer;
+
+    /**
+     * Constructs a new SocketMessage.
+     * @param {string} event The name of the socket event
+     * @param {Buffer} data The message payload
+     * @param {string} [uuid] An optional uuid to use for this message. If not provided, a new uuid will be generated.
+     */
     constructor(event: string, data: Buffer, uuid?: string) {
         this.event = event;
         this.data = data;
         this.uuid = uuid ?? generateUuid();
     }
 
+    /**
+     * Constructs a SocketMessage from a Buffer.
+     * @param {Buffer} bytes The buffer to parse
+     * @returns {SocketMessage}
+     */
     static fromBytes(bytes: Buffer): SocketMessage {
         const eventStart = bytes.indexOf(START_OF_TEXT);
         const eventEnd = bytes.indexOf(END_OF_TEXT);
@@ -28,6 +57,11 @@ export default class SocketMessage {
         return new SocketMessage(event, data, uuid);
     }
 
+    /**
+     * Converts the SocketMessage to a Buffer for sending over the socket.
+     * Uses the format STX+event+ETX+STX+uuid+ETX+data
+     * @returns {Buffer}
+     */
     toBytes(): Buffer {
         const eventBuf = Buffer.from(this.event, "ascii");
         const uuidBuf = Buffer.from(this.uuid, "ascii");

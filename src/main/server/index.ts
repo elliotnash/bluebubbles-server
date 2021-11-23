@@ -34,16 +34,17 @@ import {
     QueueService,
     IPCService,
     UpdateService,
-    MessageManager
+    CloudflareService
 } from "@server/services";
 import { EventCache } from "@server/eventCache";
 import { runTerminalScript, openSystemPreferences } from "@server/api/v1/apple/scripts";
 
 import { ActionHandler } from "./api/v1/apple/actions";
 import { insertChatParticipants, isEmpty, isMinBigSur, isNotEmpty } from "./helpers/utils";
-import { Proxy } from "./services/proxy";
+import { Proxy } from "./services/proxyServices/proxy";
 import SwiftHelperService from "./services/swiftHelperProcess";
-import { BlueBubblesHelperService } from "./services/helperProcess";
+import { BlueBubblesHelperService } from "./services/privateApi";
+import { OutgoingMessageManager } from "./managers/outgoingMessageManager";
 
 const findProcess = require("find-process");
 
@@ -101,7 +102,7 @@ class BlueBubblesServer extends EventEmitter {
 
     updater: UpdateService;
 
-    messageManager: MessageManager;
+    messageManager: OutgoingMessageManager;
 
     queue: QueueService;
 
@@ -549,7 +550,7 @@ class BlueBubblesServer extends EventEmitter {
          */
         outgoingMsgListener.on("new-entry", async (item: Message) => {
             const newMessage = await insertChatParticipants(item);
-            this.log(`New Message from You, ${newMessage.contentString()}`)
+            this.log(`New Message from You, ${newMessage.contentString()}`);
 
             // Emit it to the socket and FCM devices
             await this.emitMessage("new-message", await getMessageResponse(newMessage));
@@ -567,9 +568,11 @@ class BlueBubblesServer extends EventEmitter {
             const from = newMessage.isFromMe ? "You" : newMessage.handle?.id;
             const time = newMessage.dateDelivered || newMessage.dateRead;
             const updateType = newMessage.dateRead ? "Text Read" : "Text Delivered";
-            this.log(`Updated message from [${from}]: [${
-                newMessage.contentString()}] - [${updateType} -> ${time.toLocaleString()}]`
-            );
+
+            // Husky pre-commit validator was complaining, so I created vars
+            const content = newMessage.contentString();
+            const localeTime = time.toLocaleString();
+            this.log(`Updated message from [${from}]: [${content}] - [${updateType} -> ${localeTime}]`);
 
             // Emit it to the socket and FCM devices
             await this.emitMessage("updated-message", await getMessageResponse(newMessage));
@@ -719,7 +722,7 @@ class BlueBubblesServer extends EventEmitter {
 
         try {
             this.log("Connecting to proxies...");
-            this.proxyServices = [new NgrokService(), new LocalTunnelService()];
+            this.proxyServices = [new NgrokService(), new LocalTunnelService(), new CloudflareService()];
             await this.restartProxyServices();
         } catch (ex: any) {
             this.log(`Failed to connect to Ngrok! ${ex.message}`, "error");
@@ -741,13 +744,13 @@ class BlueBubblesServer extends EventEmitter {
 
         try {
             this.log("Starting Message Manager...");
-            this.messageManager = new MessageManager();
+            this.messageManager = new OutgoingMessageManager();
         } catch (ex: any) {
             this.log(`Failed to start Message Manager service! ${ex.message}`, "error");
         }
 
         try {
-            this.log("Starting Swift Helper listener...")
+            this.log("Starting Swift Helper listener...");
             this.swiftHelper.start();
         } catch (ex: any) {
             this.log(`Failed to start Swift Helper listener! ${ex.message}`, "error");

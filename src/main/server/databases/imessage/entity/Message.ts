@@ -8,8 +8,8 @@ import { MessageResponse } from "@server/types";
 import { Handle, getHandleResponse } from "@server/databases/imessage/entity/Handle";
 import { Chat, getChatResponse } from "@server/databases/imessage/entity/Chat";
 import { Attachment, getAttachmentResponse } from "@server/databases/imessage/entity/Attachment";
-import { isMinBigSur, isMinCatalina, isMinSierra, sanitizeStr } from "@server/helpers/utils";
-import { invisibleMediaChar } from "@server/services/http/constants";
+import { isMinBigSur, isMinCatalina, isMinHighSierra, isMinSierra, sanitizeStr } from "@server/helpers/utils";
+import { invisibleMediaChar } from "@server/services/httpService/constants";
 import { Server } from "@server/index";
 
 @Entity("message")
@@ -47,6 +47,9 @@ export class Message {
 
         // If we have attachments, print those out
         if (attachmentsLen > 0) parts.push(`Attachments: ${attachmentsLen}`);
+
+        // Lastly, add the date
+        parts.push(`Date: ${this.dateCreated.toLocaleString()}`);
 
         return parts.join("; ");
     }
@@ -406,7 +409,7 @@ export class Message {
     )
     associatedMessageType: string;
 
-    @Column({ name: "balloon_bundle_id", type: "text", nullable: true })
+    @conditional(isMinHighSierra, Column({ name: "balloon_bundle_id", type: "text", nullable: true }))
     balloonBundleId: string;
 
     @Column({ name: "payload_data", type: "blob", nullable: true })

@@ -12,7 +12,7 @@ const END_OF_TEXT = 0x03;
 /**
  * A class that facilitates sending events over the swift helper socket.
  */
-export default class SocketMessage {
+export class SocketMessage {
     /**
      * The name of the socket event
      */

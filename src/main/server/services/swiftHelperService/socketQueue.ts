@@ -1,7 +1,7 @@
 /**
  * A helper class to handle the responses from the swift helper socket.
  */
-export default class SocketQueue {
+export class SocketQueue {
     private queue: { [key: string]: (buf: Buffer) => void } = {};
 
     /**

@@ -4,13 +4,13 @@ import * as fs from "fs-extra";
 import { ChildProcess, spawn } from "child_process";
 import { app } from "electron";
 import { FileSystem } from "@server/fileSystem";
-import SocketMessage from "./socketMessage";
-import SocketQueue from "./socketQueue";
+import { SocketMessage } from "./socketMessage";
+import { SocketQueue } from "./socketQueue";
 
 /**
  * A class that handles the communication with the swift helper process.
  */
-export default class SwiftHelperService {
+export class SwiftHelperService {
     sockPath: string;
 
     helperPath: string;

@@ -42,7 +42,7 @@ import { runTerminalScript, openSystemPreferences } from "@server/api/v1/apple/s
 import { ActionHandler } from "./api/v1/apple/actions";
 import { insertChatParticipants, isEmpty, isMinBigSur, isNotEmpty } from "./helpers/utils";
 import { Proxy } from "./services/proxyServices/proxy";
-import SwiftHelperService from "./services/swiftHelperProcess";
+import { SwiftHelperService } from "./services/swiftHelperService";
 import { BlueBubblesHelperService } from "./services/privateApi";
 import { OutgoingMessageManager } from "./managers/outgoingMessageManager";
 
